@@ -25,6 +25,20 @@ std::cerr << "querying for existing keys: ";
     auto ms = std::chrono::duration<double, std::nano>(tEnd - tStart).count();
     std::cerr << "average time is " << ms / static_cast<double>(targetSize) << " ns per item\n";
 
+    std::cerr << "querying for existing keys (with operator []): ";
+    tStart = std::chrono::high_resolution_clock::now();
+    for (auto kv : verifyMap) {
+        if (map[kv.first] != kv.second) {
+            std::cerr << "True map [" << kv.first << "] = " << kv.second << ", but BooMap had " << map[kv.first] << '\n';
+        }
+    }
+    tEnd= std::chrono::high_resolution_clock::now();
+    std::cerr << "success!\n";
+    ms = std::chrono::duration<double, std::nano>(tEnd - tStart).count();
+    std::cerr << "average time is " << ms / static_cast<double>(targetSize) << " ns per item\n";
+
+
+
     std::cerr << "querying for absent keys: ";
     tStart = std::chrono::high_resolution_clock::now();
     for (auto k : absentKeys) {

@@ -68,9 +68,18 @@ public:
         return built_;
     }
 
-    IteratorT find(const KeyT& k) {
+    inline IteratorT find(const KeyT& k) {
         auto ind = boophf_->lookup(k);
         return (ind < data_.size()) ? (data_[ind].first == k ? data_.begin() + ind : data_.end()) : data_.end();
+    }
+    
+    /**
+     * NOTE: This function *assumes* that the key is in the hash.
+     * If it isn't, you'll get back a random element!
+     */
+    inline ValueT& operator[](const KeyT& k) {
+        auto ind = boophf_->lookup(k);
+        return (ind < data_.size() ? data_[ind].second : data_[0].second);
     }
     
     inline IteratorT begin() { return data_.begin(); }
