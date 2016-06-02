@@ -36,7 +36,7 @@ class BooMap {
 public:
     using HasherT = boomphf::SingleHashFunctor<KeyT>;
     using BooPHFT = boomphf::mphf<KeyT, HasherT>;
-    using iteratorT = typename std::vector<std::pair<KeyT, ValueT>>::iterator;
+    using IteratorT = typename std::vector<std::pair<KeyT, ValueT>>::iterator;
 
     BooMap() : built_(false) {}
     void add(KeyT&& k, ValueT&& v) {
@@ -60,13 +60,15 @@ public:
         return built_;
     }
 
-    iteratorT find(const KeyT& k) {
+    IteratorT find(const KeyT& k) {
         auto ind = boophf_->lookup(k);
         return (ind < data_.size()) ? (data_[ind].first == k ? data_.begin() + ind : data_.end()) : data_.end();
     }
     
-    iteratorT begin() { return data_.begin(); }
-    iteratorT end() { return data_.end(); }
+    inline IteratorT begin() { return data_.begin(); }
+    inline IteratorT end() { return data_.end(); }
+    inline IteratorT cend() const { return data_.cend(); }
+    inline IteratorT cbegin() const { return data_.cbegin(); }
     
 private:
     // From : http://stackoverflow.com/questions/838384/reorder-vector-using-a-vector-of-indices
