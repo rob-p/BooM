@@ -37,7 +37,6 @@ public:
     bool operator<=(const self_type& rhs) { return curr_ <= rhs.curr_; }
     
 private:
-    Iter begin_;
     Iter curr_;
 };
 
@@ -60,12 +59,13 @@ public:
         auto keyIt = boomphf::range(kb, ke);
         BooPHFT* ph = new BooPHFT(numElem, keyIt, nthreads);
         boophf_.reset(ph);
-        std::cerr << "reordering keys and values to coincide with phf";
+        std::cerr << "reordering keys and values to coincide with phf ... ";
         std::vector<size_t> inds; inds.reserve(data_.size());
         for (size_t i = 0; i < data_.size(); ++i) {
             inds.push_back(ph->lookup(data_[i].first));
         }
         reorder_destructive_(inds.begin(), inds.end(), data_.begin());
+        std::cerr << "done\n";
         built_ = true;
         return built_;
     }
