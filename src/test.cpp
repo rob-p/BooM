@@ -9,6 +9,37 @@
 #include <limits>
 #include <chrono>
 
+template <typename MapT, typename VerifyMapT, typename KeyT>
+void testQuery(MapT& map, VerifyMapT& verifyMap, std::vector<KeyT>& absentKeys) {
+    size_t targetSize = verifyMap.size();
+std::cerr << "querying for existing keys: ";
+    auto tStart = std::chrono::high_resolution_clock::now();
+    for (auto kv : verifyMap) {
+        auto it = map.find(kv.first);
+        if (it->second != kv.second) {
+            std::cerr << "True map [" << kv.first << "] = " << kv.second << ", but BooMap had " << it->second << '\n';
+        }
+    }
+    auto tEnd= std::chrono::high_resolution_clock::now();
+    std::cerr << "success!\n";
+    auto ms = std::chrono::duration<double, std::nano>(tEnd - tStart).count();
+    std::cerr << "average time is " << ms / static_cast<double>(targetSize) << " ns per item\n";
+
+    std::cerr << "querying for absent keys: ";
+    tStart = std::chrono::high_resolution_clock::now();
+    for (auto k : absentKeys) {
+        auto it = map.find(k);
+        if (it != map.end()) {
+            std::cerr << "Key " << k << "was absent from the true map but present in the BooMap\n";
+        }
+    }
+    tEnd= std::chrono::high_resolution_clock::now();
+    std::cerr << "success!\n";
+    ms = std::chrono::duration<double, std::nano>(tEnd - tStart).count();
+    std::cerr << "average time is " << ms / static_cast<double>(targetSize) << " ns per item\n";
+}
+
+
 int main() {
     std::random_device rd;
     std::mt19937 gen(rd());
@@ -30,19 +61,6 @@ int main() {
 
     map.build();
     std::cerr << "\ndone\n";
-    std::cerr << "querying for existing keys: ";
-    auto tStart = std::chrono::high_resolution_clock::now();
-    for (auto kv : verifyMap) {
-        auto it = map.find(kv.first);
-        if (it->second != kv.second) {
-            std::cerr << "True map [" << kv.first << "] = " << kv.second << ", but BooMap had " << it->second << '\n';
-        }
-    }
-    auto tEnd= std::chrono::high_resolution_clock::now();
-    std::cerr << "success!\n";
-    auto ms = std::chrono::duration<double, std::nano>(tEnd - tStart).count();
-    std::cerr << "average time is " << ms / static_cast<double>(targetSize) << " ns per item\n";
-    
     std::set<size_t> absentKeySet;
     size_t numReqAbsent = 10000000;
     while (absentKeySet.size() < numReqAbsent) {
@@ -52,20 +70,18 @@ int main() {
             absentKeySet.insert(k);
         }
     }
-    
     std::vector<size_t> absentKeys(absentKeySet.begin(), absentKeySet.end());
+    testQuery(map, verifyMap, absentKeys);
 
-    std::cerr << "querying for absent keys: ";
-    tStart = std::chrono::high_resolution_clock::now();
-    for (auto k : absentKeys) {
-        auto it = map.find(k);
-        if (it != map.end()) {
-            std::cerr << "Key " << k << "was absent from the true map but present in the BooMap\n";
-        }
-    }
-    tEnd= std::chrono::high_resolution_clock::now();
-    std::cerr << "success!\n";
-    ms = std::chrono::duration<double, std::nano>(tEnd - tStart).count();
-    std::cerr << "average time is " << ms / static_cast<double>(targetSize) << " ns per item\n";
- 
+    // Testing saving
+    std::cerr << "testing save to disk ... ";
+    map.save("boom_hash");
+    std::cerr << "done\n";
+    
+    // Testing loading
+    std::cerr << "testing loading from disk ... ";
+    BooMap<uint64_t, uint64_t> lmap;
+    lmap.load("boom_hash");
+    std::cerr << "done\n";
+    testQuery(lmap, verifyMap, absentKeys);
 }

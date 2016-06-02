@@ -2,6 +2,12 @@
 #define __BOO_MAP__
 
 #include "BooPHF.hpp"
+
+#include "cereal/types/vector.hpp"
+#include "cereal/types/utility.hpp"
+#include "cereal/archives/binary.hpp"
+
+#include <fstream>
 #include <vector>
 #include <iterator>
 #include <type_traits>
@@ -70,6 +76,50 @@ public:
     inline IteratorT cend() const { return data_.cend(); }
     inline IteratorT cbegin() const { return data_.cbegin(); }
     
+    void save(const std::string& ofileBase) {
+        if (built_) {
+            std::string hashFN = ofileBase + ".bph";
+            // save the perfect hash function
+            {
+                std::ofstream os(hashFN, std::ios::binary);
+                boophf_->save(os);
+                os.close();
+            }
+            // and the values
+            std::string dataFN = ofileBase + ".val";
+            {
+                std::ofstream valStream(dataFN, std::ios::binary);
+                {
+                    cereal::BinaryOutputArchive outArchive(valStream);
+                    outArchive(data_);
+                }
+                valStream.close();
+            }
+        }
+    }
+    
+    void load(const std::string& ofileBase) {
+        std::string hashFN = ofileBase + ".bph";
+        // load the perfect hash function
+        {
+            boophf_.reset(new BooPHFT);
+            std::ifstream is(hashFN, std::ios::binary);
+            boophf_->load(is);
+            is.close();
+        }
+        // and the values
+        std::string dataFN = ofileBase + ".val";
+        {
+            std::ifstream dataStream(dataFN, std::ios::binary);
+            {
+                cereal::BinaryInputArchive inArchive(dataStream);
+                inArchive(data_);
+            }
+            dataStream.close();
+        }
+        built_ = true;
+    }
+
 private:
     // From : http://stackoverflow.com/questions/838384/reorder-vector-using-a-vector-of-indices
     template< typename order_iterator, typename value_iterator >
