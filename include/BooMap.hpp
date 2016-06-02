@@ -14,6 +14,8 @@
 
 #include <sys/stat.h>
 
+// adapted from :
+// http://stackoverflow.com/questions/34875315/implementation-my-own-list-and-iterator-stl-c
 template <typename Iter>
 class KeyIterator {
 public:
@@ -24,7 +26,7 @@ public:
     typedef std::forward_iterator_tag iterator_category;
     typedef int64_t difference_type;
 
-    KeyIterator(Iter first) : begin_(first), curr_(first) {}
+    KeyIterator(Iter first) : curr_(first) {}
     KeyIterator operator++() { KeyIterator i = *this; curr_++; return i; }
     KeyIterator operator++(int) { ++curr_; return *this; }
     reference operator*() { return curr_->first; }

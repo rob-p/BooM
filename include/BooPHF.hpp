@@ -2,7 +2,9 @@
 // intended to be a minimal perfect hash function with fast and low memory construction, at the cost of (slightly) higher bits/elem than other state of the art libraries once built.
 // should work with arbitray large number of elements, based on a cascade of  "collision-free" bit arrays
 
-#pragma once
+#ifndef __BOO_PHF__
+#define __BOO_PHF__
+
 #include <stdio.h>
 #include <climits>
 #include <stdlib.h>
@@ -531,7 +533,7 @@ we need this 2-functors scheme because HashFunctors won't work with unordered_ma
 		//for debug purposes
 		void print() const
 		{
-			printf("bit array of size %lli: \n",_size);
+			printf("bit array of size %llu: \n", _size);
 			for(uint64_t ii = 0; ii< _size; ii++)
 			{
 				if(ii%10==0)
@@ -544,7 +546,7 @@ we need this 2-functors scheme because HashFunctors won't work with unordered_ma
 			printf("rank array : size %lu \n",_ranks.size());
 			for (uint64_t ii = 0; ii< _ranks.size(); ii++)
 			{
-				printf("%llu :  %lli,  ",ii,_ranks[ii]);
+				printf("%llu:  %llu,  ",ii,_ranks[ii]);
 			}
 			printf("\n");
 		}
@@ -1215,3 +1217,5 @@ we need this 2-functors scheme because HashFunctors won't work with unordered_ma
 		return NULL;
 	}
 }
+
+#endif //__BOO_PHF__
