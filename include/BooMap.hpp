@@ -52,6 +52,15 @@ public:
         data_.emplace_back(k, v);
     }
 
+    bool validate_hash(){
+        for( auto& e : data_ ) {
+            if (e.first != data_[boophf_->lookup(e.first)].first) {
+                std::cerr << "lookup of " << e.first << " failed!\n";
+            }
+        }
+        return true;
+    }
+
     bool build(int nthreads=1) {
         size_t numElem = data_.size();
         KeyIterator<decltype(data_.begin())> kb(data_.begin());
@@ -60,11 +69,7 @@ public:
         BooPHFT* ph = new BooPHFT(numElem, keyIt, nthreads);
         boophf_.reset(ph);
         std::cerr << "reordering keys and values to coincide with phf ... ";
-        std::vector<size_t> inds; inds.reserve(data_.size());
-        for (size_t i = 0; i < data_.size(); ++i) {
-            inds.push_back(ph->lookup(data_[i].first));
-        }
-        reorder_destructive_(inds.begin(), inds.end(), data_.begin());
+        reorder_fn_();
         std::cerr << "done\n";
         built_ = true;
         return built_;
@@ -164,26 +169,27 @@ private:
         return true;
     }
 
-    // From : http://stackoverflow.com/questions/838384/reorder-vector-using-a-vector-of-indices
-    template< typename order_iterator, typename value_iterator >
-    void reorder_destructive_( order_iterator order_begin, order_iterator order_end, value_iterator v )  {
-        using value_t = typename std::iterator_traits< value_iterator >::value_type;
-        using index_t = typename std::iterator_traits< order_iterator >::value_type;
-        using diff_t = typename std::iterator_traits< order_iterator >::difference_type;
+  
+    void reorder_fn_()  {
+	/* Adapted from code at: http://blog.merovius.de/2014/08/12/applying-permutation-in-constant.html */
+        // Note, we can actually do this with out the bitvector by using the high-order bit 
+        // of the start of the suffix array intervals (since they are signed integers and negative
+        // positions are forbidden). 
+      std::vector<bool> bits(data_.size(), false);
+	for ( size_t i = 0; i < data_.size(); ++i ) {
+	  if (!bits[i]) {
+	    decltype(data_.front()) v = data_[i];
+	    auto j = boophf_->lookup(data_[i].first);
+	    while (i != j) {
+            auto pj = boophf_->lookup(data_[j].first);
+	      std::swap(data_[j], v);
+	      bits[j] = 1;
+	      j = pj; 
+	    }
+	    data_[i] = v;
+	  }
+	}
 
-        diff_t remaining = order_end - 1 - order_begin;
-        for ( index_t s = index_t(); remaining > 0; ++ s ) {
-            index_t d = order_begin[s];
-            if ( d == (diff_t) -1 ) continue;
-            -- remaining;
-            value_t temp = v[s];
-            for ( index_t d2; d != s; d = d2 ) {
-                std::swap( temp, v[d] );
-                std::swap( order_begin[d], d2 = (diff_t) -1 );
-                -- remaining;
-            }
-            v[s] = temp;
-        }
     }
 
     bool built_;
